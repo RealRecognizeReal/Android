@@ -11,7 +11,8 @@ class LogoComponent extends Component {
     }
 
     render() {
-        const {style} = this.props;
+        const style = Object.assign({}, this.props.style[0], this.props.style[1]);
+
         const logoWidth = 735, logoHeight = 119;
 
         const width = style.width || (Dimensions.get('window').width - 100);

@@ -27,7 +27,7 @@ class ContentComponent extends Component {
     }
 
     render() {
-        const {result, status} = this.props;
+        const {result, status, onClickItem} = this.props;
 
         let content;
 
@@ -45,7 +45,7 @@ class ContentComponent extends Component {
                     <View style={styles.searchSubheaderWrapper}>
                         <Text style={styles.searchSubheader}> 검색 결과 {result.length}개 </Text>
                     </View>
-                    <SearhResultList result={result} />
+                    <SearhResultList onClickItem={onClickItem} result={result} />
                 </View>
             );
         }

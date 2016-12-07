@@ -11,7 +11,7 @@ import MaterialColors from 'material-colors';
 
 class SearchResultListComponent extends Component {
     render() {
-        const {result, style} = this.props;
+        const {result, style, onClickItem} = this.props;
 
         let items = result.map(function(item, idx) {
             let style = {
@@ -26,6 +26,7 @@ class SearchResultListComponent extends Component {
 
             return (
                 <SearchResultItem
+                    onClickItem={onClickItem}
                     key={item._id}
                     item={item}
                     style={style}/>

@@ -12,12 +12,15 @@ import {
     LayoutAnimation,
     ActivityIndicator,
     Dimensions,
-    ScrollView
+    ScrollView,
+    Modal,
+    WebView
 } from 'react-native';
 
 import Logo from './LogoComponent';
 import {
-    fetchSearchWithString
+    fetchSearchWithString,
+    fetchSearchWithFormulaImage
 } from '../actions';
 
 import {connect} from 'react-redux';
@@ -25,7 +28,8 @@ import ImagePicker from 'react-native-image-picker';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 
 import {
-    PRIMARY_COLOR
+    PRIMARY_COLOR,
+    FORMULA_CANVAS_URL
 } from '../consts';
 
 import Content from './ContentComponent';
@@ -36,8 +40,10 @@ class Main extends Component {
 
         this.state = {
             formulaImage: null,
+            formulaFile: null,
             searchText: '',
-            status: 'ready'
+            status: 'ready',
+            isWeb: false
         }
     }
 
@@ -56,25 +62,44 @@ class Main extends Component {
     }
 
     _handleSearchButton = () => {
-        const {searchText} = this.state;
+        const {searchText, formulaImage, formulaFile} = this.state;
         const {dispatch} = this.props;
 
-        if( searchText === '' ) return;
+        if( !formulaImage && searchText === '' ) return;
 
         this.setState({
             status: 'searching'
         });
 
-        dispatch(fetchSearchWithString(searchText));
+        if( formulaImage ) {
+            dispatch(fetchSearchWithFormulaImage(formulaFile));
+        }
+        else {
+            dispatch(fetchSearchWithString(searchText));
+        }
+
+    }
+
+    _handleClickImage = () => {
+        this.setState({
+            formulaImage: null,
+            formulaFile: null,
+            status: 'ready'
+        })
     }
 
     _handlePressCamera = () => {
         const options = {
-            title: '수식 선택'
+            title: '수식 선택',
+            maxWidth: 512
         };
 
+        this.setState({
+            status: 'ready'
+        });
+
         ImagePicker.showImagePicker(options, (response) => {
-            console.log('Response = ', response);
+            //console.log('Response = ', response);
 
             if (response.didCancel) {
                 console.log('User cancelled image picker');
@@ -97,15 +122,42 @@ class Main extends Component {
                 }
 
                 this.setState({
-                    formulaImage: source
+                    formulaImage: source,
+                    searchText: '',
+                    formulaFile: {
+                        path: response.path,
+                        fileName: response.fileName,
+                        type: response.type
+                    }
                 });
             }
         });
     }
+
+    _handleClickItem = (url) => {
+        this.setState({
+            url,
+            isWeb: true
+        });
+    }
+
+    _handlePressEdit = () => {
+        this.setState({
+            url: FORMULA_CANVAS_URL,
+            isWeb: true
+        });
+    }
+
+    _handleNavigationEnd = (navState) => {
+        console.log(navState);
+    }
+
     render() {
-        const {searchText, status} = this.state;
+        const {searchText, status, formulaImage} = this.state;
 
         let statusStyle = {};
+
+        let searchBar;
 
         if( status === 'ready' ) {
             statusStyle = {
@@ -117,20 +169,23 @@ class Main extends Component {
                 },
                 buttonWrapper: {
                     marginTop: 20
+                },
+                logo: {
+                    marginTop: 200
                 }
             }
-
         }
 
         else {
             statusStyle = {
-
+                formulaImageWrapper: {
+                    marginBottom: 20
+                }
             }
         }
-        return (
-            <ScrollView contentContainerStyle={[styles.container, statusStyle.container]}>
-                <Logo style={styles.logo} />
 
+        if( !formulaImage ) {
+            searchBar = (
                 <View style={[styles.textInputWrapper, statusStyle.textInputWrapper]}>
                     <TextInput
                         placeholder={'검색어를 입력해주세요'}
@@ -139,45 +194,91 @@ class Main extends Component {
                         onChangeText={(_searchText) => this.setState({searchText: _searchText})}
                         value={searchText}/>
 
-                    <TouchableOpacity onPress={this._handlePressCamera}>
-                        <MaterialIcon name="photo-camera" size={40}/>
-                    </TouchableOpacity>
-                </View>
+                    <View style={styles.searchBar}>
+                        <TouchableOpacity onPress={this._handlePressCamera}>
+                            <MaterialIcon name="photo-camera" size={40}/>
+                        </TouchableOpacity>
 
-                <View style={[styles.buttonWrapper, statusStyle.buttonWrapper]}>
-                    <Button
-                        color={PRIMARY_COLOR}
-                        title="검색"
-                        onPress={this._handleSearchButton} />
+                        <TouchableOpacity onPress={this._handlePressEdit} style={{marginLeft: 10}}>
+                            <MaterialIcon name="edit" size={40}/>
+                        </TouchableOpacity>
+                    </View>
                 </View>
+            );
+        }
+        else {
+            searchBar = (
+                <TouchableOpacity onPress={this._handleClickImage}>
+                    <View style={[statusStyle.formulaImageWrapper]}>
+                        <Image source={formulaImage} style={styles.formulaImage} />
+                    </View>
+                </TouchableOpacity>
+            )
+        }
 
-                <Content status={status} />
-            </ScrollView>
+        return (
+            <View style={{flex: 1}}>
+                <ScrollView contentContainerStyle={[styles.container, statusStyle.container]}>
+                    <Logo style={[styles.logo, statusStyle.logo]} />
+
+                    {searchBar}
+
+                    <View style={[styles.buttonWrapper, statusStyle.buttonWrapper]}>
+                        <Button
+                            color={PRIMARY_COLOR}
+                            title="검색"
+                            onPress={this._handleSearchButton} />
+                    </View>
+
+                    <View style={{marginBottom: 20}}>
+                        <Content onClickItem={this._handleClickItem} status={status} />
+                    </View>
+
+
+                </ScrollView>
+
+                <Modal
+                    visible={this.state.isWeb}
+                    onRequestClose={() => {this.setState({isWeb: false})}} >
+                    <WebView
+                        onNavigationStateChange={this._handleNavigationEnd}
+                        startInLoadingState={true}
+                        source={{uri: this.state.url}} />
+                </Modal>
+            </View>
         )
     }
 }
 
 const {width} = Dimensions.get('window');
-
 const styles = {
     container: {
-        flex: 1,
+        //flex: 1,
         alignItems: 'center'
     },
     textInputWrapper: {
-        width: width-50,
-        flexDirection: 'row'
+        width: width-50
     },
     textInput: {
-        height: 35,
-        width: width-90
+        height: 50,
+        width: width-50
     },
     logo: {
+        marginTop: 50,
         width: width-50,
         resizeMode: 'stretch'
     },
     buttonWrapper: {
         width: width-50
+    },
+    formulaImage: {
+        height: 100,
+        resizeMode: 'cover',
+        width: width-50
+    },
+    searchBar: {
+        flexDirection: 'row',
+        marginTop: 10
     }
 };
 

@@ -2,29 +2,43 @@ import React, {Component} from 'react';
 
 import {
     View,
-    Text
+    Text,
+    TouchableNativeFeedback,
+    WebView
 } from 'react-native';
 
 import MaterialColors from 'material-colors';
 
 class SearchResultItemComponent extends Component {
     render() {
-        const {item, style} = this.props;
+        const {item, style, onClickItem} = this.props;
+
+        let {desc} = item;
+
+        if( desc.length > 140 ) {
+            desc = desc.substr(0, 140).trim() + '..';
+        }
+
+        if( !desc ) {
+            desc = '요약 정보가 없습니다.';
+        }
 
         return (
-            <View style={[style, styles.container]}>
-                <View>
-                    <Text style={styles.title}> {item.title} </Text>
-                </View>
+            <TouchableNativeFeedback onPress={onClickItem.bind(null, item.pageUrl)}>
+                <View style={[style, styles.container]}>
+                    <View>
+                        <Text style={styles.title}> {item.pageTitle} </Text>
+                    </View>
 
-                <View>
-                    <Text style={styles.url}> {item.url} </Text>
-                </View>
+                    <View>
+                        <Text style={styles.url}> {item.pageUrl} </Text>
+                    </View>
 
-                <View>
-                    <Text> {item.description} </Text>
+                    <View>
+                        <Text> {desc} </Text>
+                    </View>
                 </View>
-            </View>
+            </TouchableNativeFeedback>
         );
     }
 }

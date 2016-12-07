@@ -10,6 +10,7 @@
     "react": "15.3.2",
     "react-native": "0.39.0-rc.0",
     "react-native-button": "^1.7.1",
+    "react-native-fetch-blob": "^0.10.0",
     "react-native-image-picker": "^0.22.9",
     "react-native-md-textinput": "^2.0.4",
     "react-native-vector-icons": "^3.0.0",
